@@ -98,7 +98,7 @@ export default function CartPage() {
                     <p className="text-[10px] uppercase font-bold text-dark/40 mt-1">Pack premium (+50 MAD)</p>
                   </div>
                   <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${isGiftPack ? 'bg-accent-purple border-accent-purple text-white' : 'border-gray-200 bg-white'}`}>
-                    {isGiftPack && <Check size={12} strokeWidth={4} />}
+                    {isGiftPack && <Check size={12} className="stroke-[4]" />}
                   </div>
                 </div>
 
