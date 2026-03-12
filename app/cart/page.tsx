@@ -152,11 +152,11 @@ export default function CartPage() {
   );
 }
 
-function Check({ size, className }: { size: number; className?: string }) {
+function Check({ size, className, strokeWidth = 3 }: { size: number; className?: string; strokeWidth?: number }) {
   return (
     <svg 
       width={size} height={size} viewBox="0 0 24 24" fill="none" 
-      stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" 
+      stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" 
       className={className}
     >
       <polyline points="20 6 9 17 4 12" />
