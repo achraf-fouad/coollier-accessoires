@@ -10,11 +10,11 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Check, Truck, ShieldCheck, Loader2, Star, Users, Eye, Flame, ShoppingBag, MessageCircle } from 'lucide-react';
+import { ensureValidImageUrl } from '@/lib/utils';
 
-const VARIANTS = [
-  { name: 'Classic White - Gold Polish', image: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?q=80&w=100' },
-  { name: 'Elegant Rose - Silver Polish', image: 'https://images.unsplash.com/photo-1611591439812-49996203d77a?q=80&w=100' },
-  { name: 'Midnight Black - Gold Polish', image: 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?q=80&w=100' },
+// Fallback variants if not defined in metadata
+const DEFAULT_VARIANTS = [
+  'Modèle Standard'
 ];
 
 export default function ProductPage({ params }: { params: Promise<{ id: string }> }) {
@@ -27,16 +27,18 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
   const [product, setProduct] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [orderLoading, setOrderLoading] = useState(false);
-  const [selectedPack, setSelectedPack] = useState(1);
+  const [selectedPackIdx, setSelectedPackIdx] = useState(0);
   const [isStickyVisible, setIsStickyVisible] = useState(false);
+  const [activeImage, setActiveImage] = useState<string | null>(null);
   
   // Choice Mode State
-  const [selectedVariants, setSelectedVariants] = useState<string[]>(['Classic White - Gold Polish']);
+  const [selectedVariants, setSelectedVariants] = useState<string[]>([]);
 
   const [formData, setFormData] = useState({
     fullName: '',
     phone: '',
     city: '',
+    quartier: '',
     address: '',
   });
 
@@ -70,21 +72,38 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
 
   useEffect(() => {
     // Sync variants count with pack selection
-    const newVariants = Array(selectedPack).fill(0).map((_, i) => selectedVariants[i] || VARIANTS[0].name);
+    if (!product) return;
+    const currentBundles = product.metadata?.bundles || [
+      { name: '1 PIÈCE', items_count: 1, price: product.price }
+    ];
+    const pack = currentBundles[selectedPackIdx] || currentBundles[0];
+    const variantsList = product.metadata?.variants || DEFAULT_VARIANTS;
+    
+    const newVariants = Array(pack.items_count).fill(0).map((_, i) => selectedVariants[i] || variantsList[0]);
     setSelectedVariants(newVariants);
-  }, [selectedPack]);
+  }, [selectedPackIdx, product]);
 
   if (loading) return <div className="h-screen flex items-center justify-center font-serif text-2xl">Chargement...</div>;
+
+  // Build gallery images: use multi-upload from metadata, fallback to main image repeated
+  const productImages: string[] = (() => {
+    const imgs: string[] = product?.metadata?.images?.filter(Boolean) || [];
+    if (imgs.length > 0) return imgs.slice(0, 4);
+    return [product.image].filter(Boolean);
+  })();
 
   const scrollToForm = () => {
     formRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
+
   const calculateTotalPrice = () => {
-    let base = 150; // Base for 1
-    if (selectedPack === 2) base = 250; 
-    if (selectedPack === 3) base = 350;
-    return base + (isGiftPack ? 50 : 0);
+    if (!product) return 0;
+    const currentBundles = product.metadata?.bundles || [
+      { name: '1 PIÈCE', items_count: 1, price: product.price }
+    ];
+    const pack = currentBundles[selectedPackIdx] || currentBundles[0];
+    return Number(pack.price) + (isGiftPack ? 50 : 0);
   };
 
   const handleOrder = async (e: React.FormEvent) => {
@@ -93,16 +112,27 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
 
     try {
       const totalPrice = calculateTotalPrice();
+      const currentBundles = product.metadata?.bundles || [
+        { name: '1 PIÈCE', items_count: 1, price: product.price }
+      ];
+      const pack = currentBundles[selectedPackIdx] || currentBundles[0];
+      
+      const fullAddress = [
+        formData.address,
+        formData.quartier ? `(Quartier: ${formData.quartier})` : '',
+        `PACK: ${pack.name}`,
+        `CHOIX: ${selectedVariants.join(', ')}`
+      ].filter(Boolean).join(' | ');
+
       const { data: order, error: orderError } = await supabase
         .from('orders')
         .insert([{
           customer_name: formData.fullName,
           phone: formData.phone,
           city: formData.city,
-          address: formData.address,
+          address: fullAddress,
           total_price: totalPrice,
           gift_pack: isGiftPack,
-          metadata: { variants: selectedVariants }
         }])
         .select().single();
 
@@ -111,14 +141,14 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
       await supabase.from('order_items').insert([{
         order_id: order.id,
         product_id: product.id,
-        quantity: selectedPack,
-        price: product.price,
+        quantity: pack.items_count,
+        price: pack.price,
       }]);
 
       router.push('/success');
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      router.push('/success');
+      alert('Erreur commande: ' + (err?.message || JSON.stringify(err)));
     } finally {
       setOrderLoading(false);
     }
@@ -139,20 +169,42 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
               animate={{ opacity: 1, scale: 1 }}
               className="relative aspect-[4/5] bg-gray-50 rounded-2xl overflow-hidden shadow-sm shadow-dark/5"
             >
-              <Image src={product.image} alt={product.name} fill className="object-cover" priority />
+              <Image 
+                src={ensureValidImageUrl(activeImage || product.image)} 
+                alt={product.name} 
+                fill 
+                className="object-cover" 
+                priority 
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 40vw"
+              />
               <div className="absolute top-6 left-6 flex flex-col gap-3">
                 <span className="bg-accent-purple text-white text-[10px] font-bold px-4 py-1.5 rounded-full uppercase tracking-widest shadow-lg shadow-accent-purple/30">Most Pop</span>
                 <span className="bg-white text-dark text-[10px] font-bold px-4 py-1.5 rounded-full uppercase tracking-widest border border-gray-100 shadow-sm">Hot Product</span>
                 <span className="bg-green-500 text-white text-[10px] font-bold px-4 py-1.5 rounded-full uppercase tracking-widest shadow-lg shadow-green-500/20">1er qualité au Maroc</span>
               </div>
             </motion.div>
-            <div className="grid grid-cols-4 gap-4">
-              {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="relative aspect-square rounded-xl overflow-hidden border-2 border-transparent hover:border-accent-purple cursor-pointer transition-all shadow-sm">
-                  <Image src={product.image} alt="" fill className="object-cover" />
-                </div>
-              ))}
-            </div>
+            {/* Thumbnail gallery - shows product images if multiple available */}
+            {productImages.length > 1 && (
+              <div className="grid grid-cols-4 gap-4">
+                {productImages.map((img, i) => (
+                  <div
+                    key={i}
+                    onClick={() => setActiveImage(img)}
+                    className={`relative aspect-square rounded-xl overflow-hidden cursor-pointer transition-all shadow-sm border-2 ${
+                      (activeImage || product.image) === img ? 'border-accent-purple' : 'border-transparent hover:border-accent-purple/50'
+                    }`}
+                  >
+                    <Image 
+                      src={ensureValidImageUrl(img)} 
+                      alt="" 
+                      fill 
+                      className="object-cover" 
+                      sizes="(max-width: 768px) 25vw, 10vw"
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Right: Info & Form */}
@@ -190,40 +242,36 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
               </div>
               
               <div className="grid grid-cols-1 gap-4">
-                {[
-                  { id: 1, label: '1 PIÈCE (ESSENTIAL)', price: '150 MAD', desc: 'Livraison Gratuite Incluse', icon: '💎' },
-                  { id: 2, label: '2 PIÈCES (VELOORA PACK)', price: '250 MAD', desc: 'Économisez 50 MAD', icon: '✨', badge: '-40%', hot: true },
-                  { id: 3, label: '3 PIÈCES (ULTIMATE TRIO)', price: '350 MAD', desc: 'Le Meilleur Prix du Marché', icon: '🔥', badge: '-60%' },
-                ].map((pack) => (
+                {(product.metadata?.bundles || [
+                  { name: '1 PIÈCE (ESSENTIAL)', price: product.price, items_count: 1, badge: 'OFFRE DE RÉVÉRENCE', hot: true }
+                ]).map((pack: any, idx: number) => (
                   <div 
-                    key={pack.id}
-                    onClick={() => setSelectedPack(pack.id)}
+                    key={idx}
+                    onClick={() => setSelectedPackIdx(idx)}
                     className={`relative p-6 rounded-3xl border-2 transition-all duration-300 cursor-pointer flex flex-col space-y-4 ${
-                      selectedPack === pack.id ? 'border-accent-purple bg-accent-purple/5 ring-1 ring-accent-purple shadow-xl shadow-accent-purple/10' : 'border-gray-100 bg-white hover:border-gray-200 shadow-sm'
+                      selectedPackIdx === idx ? 'border-accent-purple bg-accent-purple/5 ring-1 ring-accent-purple shadow-xl shadow-accent-purple/10' : 'border-gray-100 bg-white hover:border-gray-200 shadow-sm'
                     }`}
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-4">
-                        <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all ${selectedPack === pack.id ? 'border-accent-purple bg-accent-purple' : 'border-gray-200'}`}>
-                          {selectedPack === pack.id && <Check size={16} className="text-white" />}
+                        <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all ${selectedPackIdx === idx ? 'border-accent-purple bg-accent-purple' : 'border-gray-200'}`}>
+                          {selectedPackIdx === idx && <Check size={16} className="text-white" />}
                         </div>
                         <div>
                           <p className="font-black text-lg tracking-tight flex items-center space-x-2 uppercase">
-                            <span>{pack.label}</span>
-                            <span>{pack.icon}</span>
+                            <span>{pack.name}</span>
                           </p>
-                          <p className="text-[10px] text-dark/50 font-bold uppercase tracking-widest mt-1">{pack.desc}</p>
+                          <p className="text-[10px] text-dark/50 font-bold uppercase tracking-widest mt-1">Qté: {pack.items_count} Articles</p>
                         </div>
                       </div>
                       <div className="text-right">
-                        {pack.badge && <span className="block text-[10px] font-black text-red-600 uppercase mb-1">{pack.badge} DISPO</span>}
-                        <p className={`text-2xl font-black ${selectedPack === pack.id ? 'text-accent-purple' : 'text-dark/80'}`}>{pack.price}</p>
+                        {pack.badge && <span className="block text-[10px] font-black text-red-600 uppercase mb-1">{pack.badge}</span>}
+                        <p className={`text-2xl font-black ${selectedPackIdx === idx ? 'text-accent-purple' : 'text-dark/80'}`}>{pack.price} MAD</p>
                       </div>
                     </div>
 
-                    {/* Dynamic Variant Selectors ("Mode de Choix") */}
                     <AnimatePresence>
-                      {selectedPack === pack.id && (
+                      {selectedPackIdx === idx && (
                         <motion.div 
                           initial={{ opacity: 0, height: 0 }}
                           animate={{ opacity: 1, height: 'auto' }}
@@ -231,7 +279,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                           className="pt-4 mt-4 border-t border-accent-purple/10 space-y-4"
                         >
                           <p className="text-[10px] font-black text-accent-purple uppercase tracking-[0.2em]">Choisissez vos modèles :</p>
-                          {Array(selectedPack).fill(0).map((_, i) => (
+                          {Array(pack.items_count).fill(0).map((_, i) => (
                             <div key={i} className="space-y-2">
                               <label className="text-[9px] uppercase font-black text-dark/30 ml-1">Modèle #{i + 1}</label>
                               <div className="relative group">
@@ -244,7 +292,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                                   }}
                                   className="w-full p-4 bg-white border border-gray-200 rounded-2xl appearance-none focus:outline-none focus:border-accent-purple text-sm font-bold pr-12 group-hover:border-accent-purple/50 transition-all font-sans"
                                 >
-                                  {VARIANTS.map(v => <option key={v.name} value={v.name}>{v.name}</option>)}
+                                  {(product.metadata?.variants || DEFAULT_VARIANTS).map((v: string) => <option key={v} value={v}>{v}</option>)}
                                 </select>
                                 <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-dark/30 group-hover:text-accent-purple transition-colors">
                                   <ArrowLeft className="-rotate-90" size={16} />
@@ -256,8 +304,8 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                       )}
                     </AnimatePresence>
 
-                    {pack.hot && (
-                      <span className="absolute -top-3 left-10 bg-red-600 text-white text-[9px] font-black px-4 py-1.5 rounded-full shadow-lg shadow-red-600/20 uppercase tracking-[0.2em]">Veloora Selection</span>
+                    {pack.is_hot && (
+                      <span className="absolute -top-3 left-10 bg-red-600 text-white text-[9px] font-black px-4 py-1.5 rounded-full shadow-lg shadow-red-600/20 uppercase tracking-[0.2em]">SÉLECTION VELOORA</span>
                     )}
                   </div>
                 ))}
@@ -273,7 +321,13 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
             >
               <div className="flex items-center space-x-5">
                 <div className="w-16 h-16 bg-beige rounded-2xl overflow-hidden relative border border-gold/20 shadow-sm">
-                  <Image src="https://images.unsplash.com/photo-1549465220-1a8b9238cd48?q=80&w=200&auto=format&fit=crop" fill alt="Gift" className="object-cover" />
+                  <Image 
+                    src="https://images.unsplash.com/photo-1549465220-1a8b9238cd48?q=80&w=200&auto=format&fit=crop" 
+                    fill 
+                    alt="Gift" 
+                    className="object-cover" 
+                    sizes="64px"
+                  />
                 </div>
                 <div>
                   <p className="text-sm font-black uppercase tracking-widest flex items-center space-x-2">
@@ -335,8 +389,11 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                     <input
                       required
                       type="text"
+                      name="quartier"
+                      value={formData.quartier}
+                      onChange={(e) => setFormData({...formData, quartier: e.target.value})}
                       className="w-full p-5 bg-white border-2 border-gray-100 rounded-2xl focus:outline-none focus:border-accent-purple transition-all font-bold placeholder:text-dark/20 text-sm shadow-sm"
-                      placeholder="Quartier / Adresse"
+                      placeholder="Quartier"
                     />
                   </div>
 
@@ -348,18 +405,19 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                     className="w-full p-5 bg-white border-2 border-gray-100 rounded-2xl focus:outline-none focus:border-accent-purple transition-all font-bold placeholder:text-dark/20 text-sm shadow-sm resize-none"
                     placeholder="Adresse complète (Appartement, Rue...)"
                   />
+                  
                 </div>
 
                 <div className="pt-4">
                   <button
                     disabled={orderLoading}
-                    className="w-full py-7 bg-accent-purple text-white rounded-3xl font-black uppercase tracking-[0.3em] shadow-2xl shadow-accent-purple/40 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center space-x-4 text-xl"
+                    className="w-full py-5 md:py-7 bg-accent-purple text-white rounded-3xl font-black uppercase tracking-[0.2em] md:tracking-[0.3em] shadow-2xl shadow-accent-purple/40 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center space-x-3 md:space-x-4 text-lg md:text-xl"
                   >
                     {orderLoading ? <Loader2 className="animate-spin" /> : (
-                      <>
-                        <ShoppingBag size={24} />
+                      <div className="flex items-center justify-center space-x-3 whitespace-nowrap">
+                        <ShoppingBag size={24} className="flex-shrink-0" />
                         <span>COMMANDER MAINTENANT</span>
-                      </>
+                      </div>
                     )}
                   </button>
                   <p className="text-center text-[10px] text-dark/40 font-bold mt-4 uppercase tracking-widest">

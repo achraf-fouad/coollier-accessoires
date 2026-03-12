@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useLanguage } from '@/context/LanguageContext';
 import { useCart } from '@/context/CartContext';
 import { motion } from 'framer-motion';
+import { ensureValidImageUrl } from '@/lib/utils';
 
 interface ProductCardProps {
   product: {
@@ -29,10 +30,11 @@ export default function ProductCard({ product }: ProductCardProps) {
     >
       <Link href={`/product/${product.id}`} className="block relative aspect-[4/5] overflow-hidden bg-beige/20 mb-4">
         <Image
-          src={product.image}
+          src={ensureValidImageUrl(product.image)}
           alt={product.name}
           fill
           className="object-cover transition-transform duration-700 group-hover:scale-105"
+          sizes="(max-width: 768px) 50vw, 25vw"
         />
         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors duration-300" />
       </Link>

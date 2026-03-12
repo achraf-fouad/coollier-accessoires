@@ -21,6 +21,7 @@ export default function CheckoutPage() {
     phone: '',
     city: '',
     address: '',
+    quartier: '',
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -34,14 +35,19 @@ export default function CheckoutPage() {
     setLoading(true);
 
     try {
-      // 1. Create Order
+      const fullAddress = [
+        formData.address,
+        formData.quartier ? `(Quartier: ${formData.quartier})` : '',
+        `CART: ${cart.map(i => `${i.name}x${i.quantity}`).join(', ')}`
+      ].filter(Boolean).join(' | ');
+
       const { data: order, error: orderError } = await supabase
         .from('orders')
         .insert([{
           customer_name: formData.fullName,
           phone: formData.phone,
           city: formData.city,
-          address: formData.address,
+          address: fullAddress,
           total_price: subtotal,
           gift_pack: isGiftPack,
         }])
@@ -67,12 +73,9 @@ export default function CheckoutPage() {
       // 3. Success
       clearCart();
       router.push('/success');
-    } catch (err) {
+    } catch (err: any) {
       console.error('Order error:', err);
-      // For demo, even if it fails (e.g. Supabase not connected), we redirect to success
-      // In production, we'd show an error toast
-      clearCart();
-      router.push('/success');
+      alert('Erreur lors de la commande: ' + (err?.message || JSON.stringify(err)));
     } finally {
       setLoading(false);
     }
@@ -156,7 +159,11 @@ export default function CheckoutPage() {
                   </label>
                   <input
                     type="text"
+                    name="quartier"
+                    value={formData.quartier}
+                    onChange={handleChange}
                     className="w-full p-4 border border-beige bg-beige/5 focus:outline-none focus:border-gold transition-colors"
+                    placeholder="Ex: Maarif"
                   />
                 </div>
               </div>

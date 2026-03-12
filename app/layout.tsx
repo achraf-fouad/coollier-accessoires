@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Playfair_Display, Inter } from "next/font/google";
+import { Playfair_Display, Inter, Cairo } from "next/font/google";
 import "./globals.css";
 import { LanguageProvider } from "@/context/LanguageContext";
 import { CartProvider } from "@/context/CartContext";
@@ -14,9 +14,16 @@ const inter = Inter({
   subsets: ["latin"],
 });
 
+const cairo = Cairo({
+  variable: "--font-cairo",
+  subsets: ["arabic", "latin"],
+  weight: ["400", "600", "700", "900"],
+});
+
 export const metadata: Metadata = {
   title: "Coollier Accessories | Bijoux Raffinés au Maroc",
   description: "Boutique en ligne de bijoux minimalistes et élégants. Découvrez nos colliers, bracelets et bagues. Livraison gratuite au Maroc.",
+  keywords: "bijoux maroc, bracelets, colliers, bagues, coollier, accessoires",
 };
 
 export default function RootLayout({
@@ -27,7 +34,7 @@ export default function RootLayout({
   return (
     <html lang="fr">
       <body
-        className={`${playfair.variable} ${inter.variable} font-sans antialiased`}
+        className={`${playfair.variable} ${inter.variable} ${cairo.variable} font-sans antialiased`}
       >
         <LanguageProvider>
           <CartProvider>
