@@ -11,6 +11,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Instagram } from 'lucide-react';
 import { ensureValidImageUrl } from '@/lib/utils';
+import aboutImg from "@/public/about.jpeg"
 
 export default function Home() {
   const { t, lang } = useLanguage();
@@ -129,7 +130,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
           <div className="relative aspect-square">
             <Image
-              src={ensureValidImageUrl("https://images.unsplash.com/photo-1573408302355-4e0b7cb0308d?q=80&w=1000&auto=format&fit=crop")}
+              src={aboutImg}
               alt="Artisan Jewelry"
               fill
               className="object-cover"
@@ -157,26 +158,11 @@ export default function Home() {
         <div className="text-center mb-12">
           <div className="flex items-center justify-center space-x-3 mb-3">
             <Instagram size={24} className="text-accent-purple" />
-            <h2 className="text-3xl font-serif">#CoollierStyle</h2>
+            <h2 className="text-3xl font-serif">#CollierAccessories</h2>
           </div>
-          <p className="text-dark/50 uppercase tracking-widest text-xs">Suivez-nous sur Instagram @coollier.ma</p>
+          <p className="text-dark/50 uppercase tracking-widest text-xs">Suivez-nous sur Instagram @coollieraccessoires</p>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 h-[250px] md:h-[400px]">
-          {displayGallery.map((url, i) => (
-            <div key={i} className="relative overflow-hidden group">
-              <Image
-                src={ensureValidImageUrl(url)}
-                alt={`Coollier Style ${i + 1}`}
-                fill
-                className="object-cover transition-all duration-700 hover:scale-110"
-                sizes="(max-width: 768px) 50vw, 33vw"
-              />
-              <div className="absolute inset-0 bg-accent-purple/0 group-hover:bg-accent-purple/30 transition-all duration-500 flex items-center justify-center">
-                <Instagram size={28} className="text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-              </div>
-            </div>
-          ))}
-        </div>
+        
       </section>
 
       <Footer />

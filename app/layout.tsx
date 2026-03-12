@@ -24,6 +24,9 @@ export const metadata: Metadata = {
   title: "Coollier Accessories | Bijoux Raffinés au Maroc",
   description: "Boutique en ligne de bijoux minimalistes et élégants. Découvrez nos colliers, bracelets et bagues. Livraison gratuite au Maroc.",
   keywords: "bijoux maroc, bracelets, colliers, bagues, coollier, accessoires",
+  icons: {
+    icon: "/icon.jpg",
+  },
 };
 
 export default function RootLayout({
