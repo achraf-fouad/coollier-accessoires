@@ -51,12 +51,12 @@ export default function ProductCard({ product }: ProductCardProps) {
         <p className="text-sm font-medium">{product.price} MAD</p>
       </div>
 
-      <button
-        onClick={() => addItem({ ...product, quantity: 1 })}
-        className="mt-4 w-full py-3 text-xs uppercase tracking-widest border border-dark hover:bg-accent-purple hover:border-accent-purple hover:text-white transition-all duration-300 font-bold"
+      <Link
+        href={`/product/${product.id}`}
+        className="mt-4 w-full py-3 inline-block text-center text-xs uppercase tracking-widest border border-dark hover:bg-accent-purple hover:border-accent-purple hover:text-white transition-all duration-300 font-bold"
       >
-        {t.cart.add}
-      </button>
+        Choisir les options
+      </Link>
     </motion.div>
   );
 }

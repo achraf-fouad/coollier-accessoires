@@ -83,7 +83,7 @@ export default function CheckoutPage() {
 
   if (cart.length === 0) {
     return (
-      <main className={lang === 'ar' ? 'rtl' : 'ltr'}>
+      <main>
         <Navbar />
         <div className="h-[60vh] flex flex-col items-center justify-center">
           <h1 className="text-2xl font-serif mb-4">Votre panier est vide</h1>
@@ -95,7 +95,7 @@ export default function CheckoutPage() {
   }
 
   return (
-    <main className={lang === 'ar' ? 'rtl' : 'ltr'}>
+    <main>
       <Navbar />
       
       <div className="max-w-4xl mx-auto px-4 py-16">

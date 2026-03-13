@@ -40,7 +40,7 @@ export default function Navbar() {
             </Link>
           </div>
 
-          {/* Desktop Nav */}
+            {/* Desktop Nav */}
           <div className="hidden md:flex space-x-8 items-center">
             <Link href="/shop" className="text-sm uppercase tracking-widest hover:text-gold transition-colors">
               {t.nav.shop}
@@ -55,14 +55,6 @@ export default function Navbar() {
 
           {/* Icons */}
           <div className="flex items-center space-x-4">
-            <button
-              onClick={toggleLang}
-              className="flex items-center space-x-1 text-sm font-medium hover:text-gold transition-colors"
-              title="Toggle Language"
-            >
-              <Globe size={18} />
-              <span className="uppercase">{lang === 'fr' ? 'AR' : 'FR'}</span>
-            </button>
             <button
               onClick={() => setIsCartOpen(true)}
               className="relative p-2 text-dark hover:text-gold transition-colors"

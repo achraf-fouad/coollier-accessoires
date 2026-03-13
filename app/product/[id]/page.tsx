@@ -54,6 +54,13 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
           price: 150,
           image: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?q=80&w=800&auto=format&fit=crop',
           category: 'bracelets',
+          metadata: {
+            variants: ['Blanc', 'Noir', 'Rouge', 'Bleu'],
+            bundles: [
+              { name: '1 PIÈCE (ESSENTIAL)', price: 150, items_count: 1, badge: 'OFFRE DE RÉVÉRENCE', is_hot: true },
+              { name: '2 PIÈCES', price: 250, items_count: 2 },
+            ]
+          }
         });
       }
       setLoading(false);
@@ -154,8 +161,28 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
     }
   };
 
+    const handleAddToCart = () => {
+      if (!product) return;
+      const currentBundles = product.metadata?.bundles || [
+        { name: '1 PIÈCE', items_count: 1, price: product.price }
+      ];
+      const pack = currentBundles[selectedPackIdx] || currentBundles[0];
+      
+      // Create a unique ID that includes the variants so different selections are separate items
+      const variantKey = selectedVariants.join('-');
+      
+      addItem({
+        id: `${product.id}-${selectedPackIdx}-${variantKey}`,
+        name: `${product.name} (${pack.name})`,
+        price: pack.price,
+        image: ensureValidImageUrl(activeImage || product.image),
+        quantity: 1,
+        variants: selectedVariants,
+      });
+    };
+
   return (
-    <main className={`bg-white min-h-screen ${lang === 'ar' ? 'rtl' : 'ltr'}`}>
+    <main className="bg-white min-h-screen">
       <Navbar />
       
       {/* Product Content */}
@@ -408,7 +435,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                   
                 </div>
 
-                <div className="pt-4">
+                <div className="pt-4 space-y-4">
                   <button
                     disabled={orderLoading}
                     className="w-full py-5 md:py-7 bg-accent-purple text-white rounded-3xl font-black uppercase tracking-[0.2em] md:tracking-[0.3em] shadow-2xl shadow-accent-purple/40 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center space-x-3 md:space-x-4 text-lg md:text-xl"
@@ -420,6 +447,16 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                       </div>
                     )}
                   </button>
+
+                  <button
+                    type="button"
+                    onClick={handleAddToCart}
+                    className="w-full py-5 md:py-6 bg-white text-accent-purple border-2 border-accent-purple rounded-3xl font-black uppercase tracking-[0.2em] md:tracking-[0.3em] hover:bg-accent-purple hover:text-white transition-all flex items-center justify-center space-x-3 md:space-x-4 text-base md:text-lg"
+                  >
+                    <ShoppingBag size={20} className="flex-shrink-0" />
+                    <span>AJOUTER AU PANIER</span>
+                  </button>
+
                   <p className="text-center text-[10px] text-dark/40 font-bold mt-4 uppercase tracking-widest">
                     Livraison gratuite + Paiement Cash à la livraison
                   </p>

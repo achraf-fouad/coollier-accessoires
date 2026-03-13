@@ -53,7 +53,7 @@ export default function Home() {
   const displayGallery = galleryImages.length >= 6 ? galleryImages : fallbackGallery;
 
   return (
-    <main className={lang === 'ar' ? 'rtl' : 'ltr'}>
+    <main>
       <Navbar />
       
       {/* Hero Section */}

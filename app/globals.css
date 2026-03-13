@@ -24,35 +24,3 @@ body {
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-serif);
 }
-
-/* RTL Arabic support */
-.rtl {
-  direction: rtl;
-  text-align: right;
-}
-
-.ltr {
-  direction: ltr;
-  text-align: left;
-}
-
-/* Arabic font override when in RTL mode */
-:lang(ar), [dir="rtl"] {
-  font-family: var(--font-cairo, 'Cairo', 'Arial', sans-serif);
-}
-
-[dir="rtl"] h1,
-[dir="rtl"] h2,
-[dir="rtl"] h3 {
-  font-family: var(--font-cairo, 'Cairo', serif);
-}
-
-/* Fix spacing for RTL flex containers */
-[dir="rtl"] .space-x-1 > :not([hidden]) ~ :not([hidden]),
-[dir="rtl"] .space-x-2 > :not([hidden]) ~ :not([hidden]),
-[dir="rtl"] .space-x-3 > :not([hidden]) ~ :not([hidden]),
-[dir="rtl"] .space-x-4 > :not([hidden]) ~ :not([hidden]),
-[dir="rtl"] .space-x-6 > :not([hidden]) ~ :not([hidden]),
-[dir="rtl"] .space-x-8 > :not([hidden]) ~ :not([hidden]) {
-  --tw-space-x-reverse: 1;
-}

@@ -23,7 +23,7 @@ export default function Shop() {
   }, []);
 
   return (
-    <main className={lang === 'ar' ? 'rtl' : 'ltr'}>
+    <main>
       <Navbar />
       
       <section className="bg-beige/10 py-20 border-b border-beige">
