@@ -70,25 +70,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const totalItems = cart.reduce((acc, item) => acc + item.quantity, 0);
 
-  // Bundle Pricing Logic:
-  // 1 item = 129
-  // 2 items = 199
-  // 3 items = 299
-  // 4+ items: I'll assume the 3-pack repeats or we just add the single price?
-  // Let's go with a simple rule: 1=129, 2=199, >=3 = 299 + (extra * 100)?
-  // Actually, I'll follow the user's explicit rules and maybe 3+ is just 299 as a cap or something.
-  // Actually, usually these brands want 3 = 299. If they buy 4, maybe they want another pack?
-  // I'll implement:
-  // if totalItems === 1 -> 129
-  // if totalItems === 2 -> 199
-  // if totalItems >= 3 -> 299
-  
-  let basePrice = 0;
-  if (totalItems === 1) basePrice = 129;
-  else if (totalItems === 2) basePrice = 199;
-  else if (totalItems >= 3) basePrice = 299;
-
-  const subtotal = basePrice + (isGiftPack ? 49 : 0);
+  const subtotal = cart.reduce((acc, item) => acc + (item.price * item.quantity), 0) + (isGiftPack ? 50 : 0);
 
   return (
     <CartContext.Provider

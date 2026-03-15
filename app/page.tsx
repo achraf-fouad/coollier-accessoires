@@ -20,21 +20,28 @@ export default function Home() {
 
   useEffect(() => {
     async function fetchProducts() {
-      const { data } = await supabase.from('products').select('*').limit(8);
+      const { data } = await supabase.from('products').select('*');
       if (data && data.length > 0) {
-        setProducts(data.slice(0, 4));
+        // Sort by position in metadata
+        const sorted = [...data].sort((a, b) => {
+          const posA = a.metadata?.position ?? 999;
+          const posB = b.metadata?.position ?? 999;
+          return posA - posB;
+        });
+        
+        setProducts(sorted.slice(0, 4));
 
         // Build gallery from product images (main + extras from metadata)
         const imgs: string[] = [];
-        for (const p of data) {
+        for (const p of sorted) {
           if (p.image) imgs.push(p.image);
           const extras: string[] = p.metadata?.images?.filter(Boolean) || [];
           imgs.push(...extras);
           if (imgs.length >= 6) break;
         }
         // Pad with first product image if not enough
-        while (imgs.length < 6 && data[0]?.image) {
-          imgs.push(data[0].image);
+        while (imgs.length < 6 && sorted[0]?.image) {
+          imgs.push(sorted[0].image);
         }
         setGalleryImages(imgs.slice(0, 6));
       }

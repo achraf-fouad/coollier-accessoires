@@ -16,6 +16,7 @@ export default function AdminProducts() {
     price: 150,
     category: 'bracelets',
     stock: 50,
+    position: 0,
   });
   const [editingId, setEditingId] = useState<string | null>(null);
   
@@ -28,8 +29,8 @@ export default function AdminProducts() {
   const [variants, setVariants] = useState<string[]>(['Modèle Standard']);
   
   // Multiple images state
-  const [imageFiles, setImageFiles] = useState<(File | null)[]>([null, null, null]);
-  const [imageUrls, setImageUrls] = useState<string[]>(['', '', '']);
+  const [imageFiles, setImageFiles] = useState<(File | null)[]>([null, null, null, null, null]);
+  const [imageUrls, setImageUrls] = useState<string[]>(['', '', '', '', '']);
 
   useEffect(() => {
     fetchProducts();
@@ -62,7 +63,7 @@ export default function AdminProducts() {
     try {
       // Upload all new files
       const finalUrls = [...imageUrls];
-      for (let i = 0; i < 3; i++) {
+      for (let i = 0; i < 5; i++) {
         if (imageFiles[i]) {
           try {
             finalUrls[i] = await handleUploadImage(imageFiles[i]!);
@@ -87,7 +88,8 @@ export default function AdminProducts() {
         metadata: { 
           images: finalUrls,
           bundles: bundles,
-          variants: variants 
+          variants: variants,
+          position: formData.position
         } 
       };
 
@@ -125,8 +127,9 @@ export default function AdminProducts() {
       price: product.price,
       category: product.category,
       stock: product.stock,
+      position: product.metadata?.position || 0,
     });
-    setImageUrls(product.metadata?.images || [product.image, '', '']);
+    setImageUrls(product.metadata?.images || [product.image, '', '', '', '']);
     setBundles(product.metadata?.bundles || [
       { name: '1 PIÈCE', items_count: 1, price: 150, badge: 'ESSENTIAL', is_hot: false }
     ]);
@@ -135,10 +138,10 @@ export default function AdminProducts() {
   };
 
   const resetForm = () => {
-    setFormData({ name: '', description: '', price: 150, category: 'bracelets', stock: 50 });
+    setFormData({ name: '', description: '', price: 150, category: 'bracelets', stock: 50, position: 0 });
     setEditingId(null);
-    setImageFiles([null, null, null]);
-    setImageUrls(['', '', '']);
+    setImageFiles([null, null, null, null, null]);
+    setImageUrls(['', '', '', '', '']);
     setBundles([
       { name: '1 PIÈCE', items_count: 1, price: 150, badge: 'ESSENTIAL', is_hot: false },
       { name: '2 PIÈCES', items_count: 2, price: 250, badge: 'VELOORA PACK', is_hot: true },
@@ -264,7 +267,16 @@ export default function AdminProducts() {
                   <input 
                     required type="number" 
                     value={formData.price}
-                    onChange={(e) => setFormData({...formData, price: Number(e.target.value)})}
+                    onChange={(e) => {
+                      const newPrice = Number(e.target.value);
+                      setFormData({...formData, price: newPrice});
+                      // Auto-sync first bundle price if it's the 1st piece
+                      if (bundles.length > 0 && bundles[0].items_count === 1) {
+                        const newBundles = [...bundles];
+                        newBundles[0].price = newPrice;
+                        setBundles(newBundles);
+                      }
+                    }}
                     className="w-full p-5 bg-gray-50/50 border-2 border-gray-100 rounded-2xl focus:outline-none focus:border-accent-purple transition-all font-bold text-accent-purple"
                   />
                 </div>
@@ -274,6 +286,16 @@ export default function AdminProducts() {
                     required type="number" 
                     value={formData.stock}
                     onChange={(e) => setFormData({...formData, stock: Number(e.target.value)})}
+                    className="w-full p-5 bg-gray-50/50 border-2 border-gray-100 rounded-2xl focus:outline-none focus:border-accent-purple transition-all font-bold"
+                  />
+                </div>
+                <div className="space-y-3">
+                  <label className="text-[10px] uppercase font-black text-dark/40 tracking-[0.2em] ml-1">Position (Home)</label>
+                  <input 
+                    required type="number" 
+                    value={formData.position}
+                    onChange={(e) => setFormData({...formData, position: Number(e.target.value)})}
+                    placeholder="ex: 1 pour premier"
                     className="w-full p-5 bg-gray-50/50 border-2 border-gray-100 rounded-2xl focus:outline-none focus:border-accent-purple transition-all font-bold"
                   />
                 </div>
@@ -297,8 +319,8 @@ export default function AdminProducts() {
                   <span className="text-[9px] font-black text-accent-purple bg-accent-purple/10 px-3 py-1 rounded-full uppercase tracking-tighter">Style Veloora Ready</span>
                 </div>
                 
-                <div className="grid grid-cols-3 gap-4">
-                  {[0, 1, 2].map((idx) => (
+                <div className="grid grid-cols-5 gap-4">
+                  {[0, 1, 2, 3, 4].map((idx) => (
                     <label 
                       key={idx}
                       className="group relative aspect-[3/4] border-2 border-dashed border-gray-200 rounded-3xl cursor-pointer hover:border-accent-purple hover:bg-accent-purple/[0.02] transition-all flex flex-col items-center justify-center overflow-hidden"

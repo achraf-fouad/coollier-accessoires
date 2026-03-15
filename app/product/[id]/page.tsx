@@ -106,9 +106,15 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
 
   const calculateTotalPrice = () => {
     if (!product) return 0;
-    const currentBundles = product.metadata?.bundles || [
+    const currentBundles = [...(product.metadata?.bundles || [
       { name: '1 PIÈCE', items_count: 1, price: product.price }
-    ];
+    ])];
+    
+    // Safety: If the first bundle is 1 piece, ensure it uses the product.price
+    if (currentBundles[0] && currentBundles[0].items_count === 1) {
+      currentBundles[0].price = product.price;
+    }
+
     const pack = currentBundles[selectedPackIdx] || currentBundles[0];
     return Number(pack.price) + (isGiftPack ? 50 : 0);
   };
@@ -163,9 +169,15 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
 
     const handleAddToCart = () => {
       if (!product) return;
-      const currentBundles = product.metadata?.bundles || [
+      const currentBundles = [...(product.metadata?.bundles || [
         { name: '1 PIÈCE', items_count: 1, price: product.price }
-      ];
+      ])];
+
+      // Safety: If the first bundle is 1 piece, ensure it uses the product.price
+      if (currentBundles[0] && currentBundles[0].items_count === 1) {
+        currentBundles[0].price = product.price;
+      }
+      
       const pack = currentBundles[selectedPackIdx] || currentBundles[0];
       
       // Create a unique ID that includes the variants so different selections are separate items
@@ -438,11 +450,11 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                 <div className="pt-4 space-y-4">
                   <button
                     disabled={orderLoading}
-                    className="w-full py-5 md:py-7 bg-accent-purple text-white rounded-3xl font-black uppercase tracking-[0.2em] md:tracking-[0.3em] shadow-2xl shadow-accent-purple/40 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center space-x-3 md:space-x-4 text-lg md:text-xl"
+                    className="w-full py-4 md:py-7 bg-accent-purple text-white rounded-3xl font-black uppercase tracking-[0.1em] md:tracking-[0.3em] shadow-2xl shadow-accent-purple/40 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center space-x-3 md:space-x-4 text-base md:text-xl"
                   >
                     {orderLoading ? <Loader2 className="animate-spin" /> : (
-                      <div className="flex items-center justify-center space-x-3 whitespace-nowrap">
-                        <ShoppingBag size={24} className="flex-shrink-0" />
+                      <div className="flex items-center justify-center space-x-2">
+                        <ShoppingBag size={20} className="flex-shrink-0 md:w-6 md:h-6" />
                         <span>COMMANDER MAINTENANT</span>
                       </div>
                     )}
@@ -451,9 +463,9 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                   <button
                     type="button"
                     onClick={handleAddToCart}
-                    className="w-full py-5 md:py-6 bg-white text-accent-purple border-2 border-accent-purple rounded-3xl font-black uppercase tracking-[0.2em] md:tracking-[0.3em] hover:bg-accent-purple hover:text-white transition-all flex items-center justify-center space-x-3 md:space-x-4 text-base md:text-lg"
+                    className="w-full py-4 md:py-6 bg-white text-accent-purple border-2 border-accent-purple rounded-3xl font-black uppercase tracking-[0.1em] md:tracking-[0.3em] hover:bg-accent-purple hover:text-white transition-all flex items-center justify-center space-x-3 md:space-x-4 text-sm md:text-lg"
                   >
-                    <ShoppingBag size={20} className="flex-shrink-0" />
+                    <ShoppingBag size={18} className="flex-shrink-0 md:w-5 md:h-5" />
                     <span>AJOUTER AU PANIER</span>
                   </button>
 
