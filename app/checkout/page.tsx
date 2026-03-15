@@ -35,10 +35,17 @@ export default function CheckoutPage() {
     setLoading(true);
 
     try {
+      const itemsDetails = cart.map((item) => {
+        const variantsStr = item.variants && item.variants.length > 0 
+          ? `(Choix: ${item.variants.join(', ')})` 
+          : '';
+        return `📦 ${item.name} ${variantsStr} x${item.quantity}`;
+      });
+
       const fullAddress = [
         formData.address,
         formData.quartier ? `(Quartier: ${formData.quartier})` : '',
-        `CART: ${cart.map(i => `${i.name}x${i.quantity}`).join(', ')}`
+        ...itemsDetails
       ].filter(Boolean).join(' | ');
 
       const { data: order, error: orderError } = await supabase
@@ -59,7 +66,7 @@ export default function CheckoutPage() {
       // 2. Create Order Items
       const orderItems = cart.map((item) => ({
         order_id: order.id,
-        product_id: item.id,
+        product_id: item.productId || item.id.split('-').slice(0, 5).join('-'),
         quantity: item.quantity,
         price: item.price,
       }));

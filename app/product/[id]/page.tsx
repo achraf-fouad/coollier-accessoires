@@ -133,8 +133,9 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
       const fullAddress = [
         formData.address,
         formData.quartier ? `(Quartier: ${formData.quartier})` : '',
-        `PACK: ${pack.name}`,
-        `CHOIX: ${selectedVariants.join(', ')}`
+        `📦 PRODUIT: ${product.name}`,
+        `✨ PACK: ${pack.name}`,
+        `🎨 VARIANTES: ${selectedVariants.join(', ')}`
       ].filter(Boolean).join(' | ');
 
       const { data: order, error: orderError } = await supabase
@@ -185,6 +186,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
       
       addItem({
         id: `${product.id}-${selectedPackIdx}-${variantKey}`,
+        productId: product.id,
         name: `${product.name} (${pack.name})`,
         price: pack.price,
         image: ensureValidImageUrl(activeImage || product.image),
