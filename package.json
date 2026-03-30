@@ -2,10 +2,13 @@
   "name": "coollier-accessoires",
   "version": "0.1.0",
   "private": true,
+  "main": "main.js",
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
+    "web:start": "next start",
+    "web:build": "next build",
+    "start": "concurrently \"next dev\" \"wait-on http://localhost:3000 && cross-env NODE_ENV=development-external electron .\"",
+    "build": "next build && electron-builder --win --mac --linux",
     "lint": "eslint"
   },
   "dependencies": {
@@ -24,9 +27,14 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "babel-plugin-react-compiler": "1.0.0",
+    "concurrently": "^9.2.1",
+    "cross-env": "^10.1.0",
+    "electron": "^41.1.0",
+    "electron-builder": "^26.8.1",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "wait-on": "^9.0.4"
   }
 }
